@@ -1,0 +1,41 @@
+nerooga/
+│
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts
+│
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   └── login/
+│   │   ├── (dashboard)/
+│   │   │   ├── admin/
+│   │   │   ├── manager/
+│   │   │   └── department/
+│   │   └── api/
+│   │
+│   ├── components/
+│   ├── modules/
+│   │   ├── auth/
+│   │   ├── users/
+│   │   ├── departments/
+│   │   ├── drugs/
+│   │   ├── inventory/
+│   │   ├── requests/
+│   │   ├── distributions/
+│   │   ├── transfers/
+│   │   └── reports/
+│   │
+│   ├── lib/
+│   ├── server/
+│   │   ├── repositories/
+│   │   ├── services/
+│   │   └── validators/
+│   │
+│   └── types/
+│
+├── tests/
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── README.md
