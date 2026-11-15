@@ -13,19 +13,13 @@ const prisma = new PrismaClient({
 const userData: Prisma.UserCreateInput[] = [
  
    {
-    email: "admin@example.com",
-    firstName: "Sample",
-    lastName: "Administrator",
+    email: "admin@gmail.com",
+    firstName: "nerooga",
+    lastName: "admin",
     password: "Admin123!",
     role: Role.ADMIN,
   },
-  {
-    email: "user@example.com",
-    firstName: "Sample",
-    lastName: "User",
-    password: "User12345!",
-    role: Role.USER,
-  },
+
 ];
 
 export async function main() {

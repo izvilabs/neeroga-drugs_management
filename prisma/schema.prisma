@@ -8,7 +8,10 @@ datasource db {
 }
 
 enum Role {
-  USER
+  STAFF
+  DEPARTMENT_MANAGER
+  STATIONERY_MANAGER
+  DRUGS_MANAGER
   ADMIN
 }
 
@@ -53,7 +56,7 @@ model User {
   firstName   String   
   lastName    String
   password    String
-  role        Role        @default(USER)
+  role        Role        @default(STAFF)
   number      String?     @unique
   profileImage String?    
   status      UserStatus  @default(ACTIVE)
