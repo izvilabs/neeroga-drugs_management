@@ -1,89 +1,33 @@
-import { SignJWT, jwtVerify } from "jose";
-import prisma from "../lib/prisma";
-import { AuthenticatedHandler, AuthenticatedUser } from "@/types/authentication";
+import { NextRequest, NextResponse } from "next/server";
+import * as jose from "jose"
+import { RequestUserType } from "@/types/request";
 
-const ACCESS_TOKEN_LIFETIME = "8h";
+export async function GetUser(request : NextRequest) : Promise<RequestUserType | null> {
+    
+    const loginToken = request.cookies.get("login-token")?.value
+    const secret = new TextEncoder().encode(process.env.JWT_KEY)
+    
+    try{
+        const tokenData = await jose.jwtVerify(
+            loginToken || "",
+            secret
+        )
+        const user = tokenData.payload as unknown  as RequestUserType
 
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
+        return user
 
-  if (!secret || new TextEncoder().encode(secret).byteLength < 32) {
-    throw new Error("JWT_SECRET must be set to a random value of at least 32 bytes");
-  }
+    }catch{
 
-  return new TextEncoder().encode(secret);
-}
-
-export async function createAccessToken(userId: string): Promise<string> {
-  return new SignJWT({})
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(userId)
-    .setIssuedAt()
-    .setExpirationTime(ACCESS_TOKEN_LIFETIME)
-    .sign(getJwtSecret());
-}
-
-export async function verifyAccessToken(token: string): Promise<{ userId: string } | null> {
-  try {
-    const { payload } = await jwtVerify(token, getJwtSecret(), {
-      algorithms: ["HS256"],
-    });
-
-    return typeof payload.sub === "string" ? { userId: payload.sub } : null;
-  } catch {
-    return null;
-  }
-}
-
-function getBearerToken(request: Request): string | null {
-  const authorization = request.headers.get("authorization");
-  const match = authorization?.match(/^Bearer\s+(.+)$/i);
-  return match?.[1] ?? null;
-}
-
-async function getAuthenticatedUser(request: Request): Promise<AuthenticatedUser | null> {
-  const token = getBearerToken(request);
-  if (!token) return null;
-
-  const verified = await verifyAccessToken(token);
-  if (!verified) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { id: verified.userId },
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      status: true,
-      privilages: true,
-    },
-  });
-
-  if (!user || user.status !== "ACTIVE") return null;
-  return user;
-}
-
-export function hasPrivilege(user: AuthenticatedUser, privilege: string): boolean {
-  return user.role === "ADMIN" || user.privilages.includes(privilege);
-}
-
-export function withAuthentication(handler: AuthenticatedHandler) {
-  return async (request: Request): Promise<Response> => {
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-      return Response.json({ error: "Authentication required" }, { status: 401 });
+        return null
     }
-
-    return handler(request, user);
-  };
 }
 
-export function withPrivilege(privilege: string, handler: AuthenticatedHandler) {
-  return withAuthentication((request, user) => {
-    if (!hasPrivilege(user, privilege)) {
-      return Response.json({ error: "Insufficient privileges" }, { status: 403 });
-    }
+export async function isPrivileges (request : RequestUserType | null, requiredPrivileges : string) : Promise<boolean | null> {
+    
+   if(request?.privilages.includes(requiredPrivileges)) {
+        return true
+    }else{
+        return false
+}
 
-    return handler(request, user);
-  });
 }
