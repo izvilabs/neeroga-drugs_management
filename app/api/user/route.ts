@@ -8,7 +8,7 @@ import PageInfoRetrieval from "@/utils/pageInfoRetraval";
 
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import z from "zod";
+import z, { json } from "zod";
 
 //get users
 export async function GET(request : NextRequest){
@@ -181,3 +181,81 @@ export async function PUT(request : NextRequest){
             return NextResponse.json({message : "Server error",error : error},{status : 500})         
         }
 }   
+
+//block user
+export async function PATCH(request: NextRequest) {
+  try {
+  
+    const userId = request.nextUrl.searchParams.get("id");
+
+    if (!userId) {
+      return NextResponse.json(
+        { message: "User ID is required" },
+        { status: 400 }
+      )
+    }
+
+    const admin = await GetUser(request);
+
+    if (!admin) {
+      return NextResponse.json(
+        { message: "Authentication required" },
+        { status: 401 }
+      )
+    }
+
+   
+    if (admin.role !== Role.ADMIN) {
+      return NextResponse.json(
+        { message: "Only administrators can block users" },
+        { status: 403 }
+      )
+    }
+
+    if (userId === admin.id) {
+      return NextResponse.json(
+        { message: "Admin cannot block their own account" },
+        { status: 400 }
+      )
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!existingUser) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      )
+    }
+
+    if (existingUser.status === UserStatus.BLOCKED) {
+      return NextResponse.json(
+        { message: "User is already blocked" },
+        { status: 409 }
+      )
+    }
+
+    // Block user
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: UserStatus.BLOCKED,
+      },
+    })
+
+    return NextResponse.json(
+      { message: "User successfully blocked" },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error("Block user error:", error);
+
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
