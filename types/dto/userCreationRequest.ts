@@ -5,7 +5,7 @@ export const userCreationRequestSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
   lastName: z.string().trim().min(1, "Last name is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["USER", "ADMIN"]).optional(),
+  role: z.enum(["STAFF", "DEPARTMENT_MANAGER", "STATIONERY_MANAGER", "DRUGS_MANAGER", "ADMIN"]).optional(),
   number: z.string().trim().min(1, "Phone number cannot be empty").optional(),
   profileImage: z.string().trim().nullable().optional(),
   status: z.enum(["ACTIVE", "BLOCKED"]).optional(),
