@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum DepartmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ItemStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum ItemType {
+  DRUGS
+  INVENTORY
+}
+
+enum LocationType {
+  MAIN_STORE // admin
+  MANAGER_STORE
+  DEPARTMENT 
+  OTHER  
+}
+
+enum TransferType {
+  MANUAL
+  REQUEST_BASED
+  DEPARTMENT_TO_DEPARTMENT
+}   
+
+
+model User {
+  id          String      @id @default(uuid())
+  email       String      @unique
+  firstName   String   
+  lastName    String
+  password    String
+  role        Role        @default(USER)
+  number      String?     @unique
+  profileImage String?    
+  status      UserStatus  @default(ACTIVE)
+  lastLogin   DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  privilages  String[]    @default([])
+
+  department Department[]
+  batches Batche[]
+
+  @@map("user_table")
+}
+
+model Department {
+  
+  id      String      @id @default(uuid())
+  code    String
+  name    String
+  status  DepartmentStatus    @default(ACTIVE)
+  discription   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user User[]
+  batches    Batche[]
+
+  @@map("department_table")
+}
+
+model ItemCategory {
+  id      String      @id @default(uuid())
+  code    String
+  name    String
+  discription String?
+
+  item    Item[]
+
+  @@map("drugs_category_table")
+
+}
+
+model Item {
+  id      String      @id @default(uuid())
+  code    String
+  name    String
+  type    ItemType
+  bufferlevel Int         @default(0)
+  status      ItemStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  categoryId    String
+  category    ItemCategory   @relation(fields: [categoryId] , references: [id])
+
+  batche Batche[]
+
+  @@map("drugs_table")
+
+}
+
+model Batche {
+  id          String        @id @default(uuid())
+  price       String
+  stock       Int
+  issuedate   DateTime      @default(now())
+  expireDate  DateTime
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  departmentId  String
+  userId        String
+  itemId        String
+  department    Department  @relation(fields: [departmentId] , references: [id])
+  item          Item        @relation(fields: [itemId] , references: [id])
+  user          User        @relation(fields: [userId] , references: [id])
+
+  @@map("drugs_batches_table")
+}
+
+model Request {
+  id      String    @id @default(uuid())
+  transferType TransferType 
+
+
+}
+
+model location {
+  id           String       @id @default(cuid())
+  name         String
+  type         LocationType
+  managerId    String?      @unique //if MANAGER_STORE
+  departmentId String?      @unique // if DEPARTMENT
+  createdAt    DateTime     @default(now())
+
+}
+
+model StockTransfer {
+  id                String      @id @default(ulid())
+  isConfirmed       Boolean         @default(false)
+  confirmedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  transationType    TransferType
+  
+  FromLocation     String
+  ToLocation       String
+  requestId         String?
+  transferredById   String
+
+  
+
+}

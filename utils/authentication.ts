@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { AuthenticatedHandler, AuthenticatedUser } from "../types/authentication";
 import prisma from "../lib/prisma";
+import { AuthenticatedHandler, AuthenticatedUser } from "@/types/authentication";
 
 const ACCESS_TOKEN_LIFETIME = "8h";
 
