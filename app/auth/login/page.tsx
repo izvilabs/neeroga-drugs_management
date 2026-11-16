@@ -1,12 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Role } from '@/app/generated/prisma/enums';
 
 export default function LoginPage() {
+
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,13 +17,18 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (isSubmitting) return;
 
     const normalizedEmail = email.trim();
+
+    // Validate inputs
     if (!normalizedEmail || !password) {
       toast.error('Enter your email address and password.');
       return;
     }
+
+    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error('Enter a valid email address.');
       return;
@@ -32,25 +39,50 @@ export default function LoginPage() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail, password }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password,
+        }),
       });
-      const result = await response.json();
 
-      if (!response.ok) {
-        toast.error(result.message ?? 'Unable to sign in. Check your details and try again.');
-        return;
-      }
+    const result = await response.json();
 
-      toast.success('Signed in successfully');
-      router.replace(result.redirectTo ?? '/dashboard/staff');
-      router.refresh();
-    } catch {
-      toast.error('Unable to connect. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // Handle authentication errors
+    if (!response.ok) {
+      toast.error(
+        result.message ?? 'Invalid email or password.'
+      );
+      return;
     }
+
+    // Get authenticated user's role
+    const role = result.role;
+
+    // Navigate according to user role
+    switch (role) {
+      case Role.ADMIN:
+        router.push('/dashboard/admin');
+        break;
+
+      case Role.DEPARTMENT_MANAGER:
+        router.push('/dashboard/department-managers');
+        break;
+
+      default:
+        toast.error('Unauthorized user role.');
+        break;
+    }
+
+  } catch (error) {
+    console.error('Login error:', error);
+    toast.error('Unable to connect. Please try again.');
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f3f7f5] px-4 py-6 sm:px-6 lg:px-8">
