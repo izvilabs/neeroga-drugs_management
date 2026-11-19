@@ -2,19 +2,13 @@ import prisma from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import * as jose from "jose"
+import { UserStatus } from "@/app/generated/prisma/enums";
 
 export async function POST(request : NextRequest){
     const body = await request.json();
 
     if(body.email == null){
-        return NextResponse.json(
-            {
-            message : "email is not found"
-            },
-            {
-                status : 404
-            }
-        )
+        return NextResponse.json({message : "email is not found"},{status : 404})
     }
 
     const user = await prisma.user.findFirst(
@@ -25,25 +19,10 @@ export async function POST(request : NextRequest){
         })
 
         if(user == null){
-            return NextResponse.json(
-                {
-                message : "user is not found"
-                },
-                {
-                    status : 422
-                }
-            )
-        }
+            return NextResponse.json({message : "user is not found"},{ status : 422})}
 
-        if(user.status != "ACTIVE"){
-            return NextResponse.json(
-                {
-                message : "your account is not active"
-                },
-                {
-                    status : 403
-                }
-            )
+        if(user.status == UserStatus.BLOCKED){
+            return NextResponse.json({message : "your account is blocked. Pleace contact admins"},{status : 403})
         }
 
         await prisma.user.update(
@@ -88,17 +67,9 @@ export async function POST(request : NextRequest){
                         maxAge : 60 * 60 * 24 * 7
                     }
                 )
-
                 return responce
         }else{
-            return NextResponse.json(
-                {
-                    message : "password is not valid"
-                },
-                {
-                    status : 403
-                }   
-        )
 
+            return NextResponse.json({ message : "password is not valid"},{ status : 403})
         }
 }

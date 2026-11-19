@@ -5,10 +5,9 @@ import { userCreationRequestSchema } from "@/types/dto/userCreationRequest";
 import { userSelfUpdateSchema } from "@/types/dto/userSelfUpdateRequest";
 import { GetUser, isPrivileges } from "@/utils/authentication";
 import PageInfoRetrieval from "@/utils/pageInfoRetraval";
-
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import z, { json } from "zod";
+import z from "zod";
 
 //get users
 export async function GET(request : NextRequest){
@@ -23,7 +22,7 @@ export async function GET(request : NextRequest){
     }
     const havePrivileges = await isPrivileges(user , "users:read")
 
-    if(!havePrivileges || user.role != Role.ADMIN){
+    if(!havePrivileges && user.role != Role.ADMIN){
         return NextResponse.json({message : "you are not authorized to access this resource"},{ status : 403})
     }
 
